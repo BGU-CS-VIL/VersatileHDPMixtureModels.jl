@@ -9,7 +9,7 @@ For examples, taken from the paper experiments, see the `Examples`, directory. <
 
 ### Misc
 
-For any questions: dinari@post.bgu.ac.il
+For any questions: dinari at post.bgu.ac.il
 
 Contributions, feature requests, suggestion etc.. are welcomed.
 
@@ -22,3 +22,4 @@ If you use this code for your work, please cite the following:
   booktitle={UAI},
   year={2020}
 }
+```
