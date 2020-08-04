@@ -1,9 +1,3 @@
-include("../ds.jl")
-using LinearAlgebra
-using Distributions
-using PDMats
-
-
 struct mv_gaussian <: distibution_sample
     μ::AbstractArray{Float64,1}
     Σ::AbstractArray{Float64,2}

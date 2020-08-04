@@ -26,7 +26,6 @@ function create_subclusters_labels!(labels::AbstractArray{Int64,2},
         global_cluster_params::splittable_cluster_params,
         local_dim::Int64,
         group_num::Int64, final::Bool)
-    #lr_arr = create_array(zeros(length(labels), 2))
     if size(labels,1) == 0
         return
     end

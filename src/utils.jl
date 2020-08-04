@@ -1,42 +1,3 @@
-include("params_base.jl")
-include("ds.jl")
-@everywhere using StatsBase
-@everywhere using Distributed
-@everywhere using DistributedArrays
-@everywhere using Distributions
-@everywhere using SpecialFunctions
-@everywhere using CatViews
-@everywhere using LinearAlgebra
-@everywhere using Random
-using NPZ
-using Base
-using JLD2
-
-# if use_gpu
-#     using CuArrays
-# end
-
-
-function create_array(A::AbstractArray)
-    # if use_gpu
-    #     return CuArray(A)
-    # end
-    # if use_darrays
-    #     return distribute(A)
-    # end
-    return A
-end
-
-function create_array(A::Tuple{Int64,Int64})
-    if use_gpu
-        return CuArray{Float64}(A)
-    end
-    if use_darrays
-        return distribute(Array{Float64}(undef,A))
-    end
-    return Array{Float64}(undef,A)
-end
-
 # We expects the data to be in npy format, return a dict of {group: items}, each file is a different group
 function load_data(path::String,groupcount::Number; prefix::String="", swapDimension::Bool = true)
     groups_dict = Dict()
@@ -276,4 +237,12 @@ function assign_group_leaders(groups_count, leader_dict)
         group_assignments[i] = group_leaders[i%length(group_leaders) +1 ]
     end
     return group_assignments
+end
+
+function log_multivariate_gamma(x::Number, D::Number)
+    res::Float64 = D*(D-1)/4*log(pi)
+    for d = 1:D
+        res += logabsgamma(x+(1-d)/2)[1]
+    end
+    return res
 end

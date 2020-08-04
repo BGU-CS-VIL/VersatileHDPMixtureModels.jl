@@ -1,14 +1,3 @@
-include("ds.jl")
-include("utils.jl")
-include("distributions/niw.jl")
-include("distributions/niw_stable_var.jl")
-include("distributions/bayes_network_model.jl")
-include("distributions/mv_gaussian.jl")
-include("distributions/mv_group_gaussian.jl")
-include("distributions/multinomial_dist.jl")
-include("distributions/multinomial_prior.jl")
-
-
 mutable struct Dish
     count::Int64
     cluster_params::cluster_parameters

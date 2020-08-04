@@ -2,11 +2,9 @@ using NPZ
 using Distributions
 using LinearAlgebra
 using Distributed
-using DistributedArrays
 using StatsBase
 using Distributions
 using SpecialFunctions
-using CatViews
 using LinearAlgebra
 using Random
 

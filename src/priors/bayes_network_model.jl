@@ -1,6 +1,3 @@
-include("../ds.jl")
-using LinearAlgebra
-
 struct bayes_network_model <: distribution_hyper_params
     κ::Float64
     m::AbstractArray{Float64}
@@ -39,14 +36,6 @@ function calc_posterior(prior::bayes_network_model, suff_statistics::bayes_netwo
     return bayes_network_model(κ,m,ν,ψ,prior.count,suff_statistics.mu_vector,prior.λ)
 end
 
-#function calc_posterior(prior:: niw_hyperparams, suff_statistics::niw_sufficient_statistics)
-#    κ = prior.κ + suff_statistics.N
-#    m = (κ * prior.m + suff_statistics.points_sum) / κ
-#    ν = prior.ν + suff_statistics.N
-#    ψ = prior.ψ + suff_statistics.S + prior.κ*prior.m*prior.m'-κ*m*m'
-#    return niw_hyperparams(κ,m,ν,ψ)
-#end
-
 function sample_distribution(hyperparams::bayes_network_model)
     Σ = rand(Distributions.InverseWishart(hyperparams.ν, hyperparams.ν* hyperparams.ψ))
     mu_vector = Vector{AbstractArray{Float64,1}}()
@@ -54,7 +43,6 @@ function sample_distribution(hyperparams::bayes_network_model)
     for i=1:hyperparams.count
         push!(mu_vector, rand(Distributions.MvNormal(hyperparams.ms[i], Σ/hyperparams.κ)))
     end
-    # println("Σ: " * string(Σ) * " ψ: " * string(hyperparams.ψ) * " ν: " * string(hyperparams.ν))
     return mv_group_gaussian(mu_vector,Σ,inv(Σ),logdet(Σ))
 end
 
@@ -94,15 +82,6 @@ function create_sufficient_statistics(hyper::bayes_network_model,
     return bayes_network_sufficient_statistics(N,Ngroups,points_sum[:],mu_vector,S)
 end
 
-
-function log_multivariate_gamma(x::Number, D::Number)
-    res::Float64 = D*(D-1)/4*log(pi)
-    for d = 1:D
-        res += logabsgamma(x+(1-d)/2)[1]
-    end
-    return res
-end
-
 function log_marginal_likelihood(hyper::bayes_network_model, posterior_hyper::bayes_network_model, suff_stats::bayes_network_sufficient_statistics)
     D = size(suff_stats.S,1)
     logpi = log(pi)
@@ -131,7 +110,6 @@ function create_mu_vector(points::Dict, Σ::AbstractArray{Float64}, λ::Float64)
     group_count = length(keys(points))
     A, b = create_matrix_for_least_squares(points, Σ, λ, group_count)
     xhat = inv(A'*A)*(A'*b)
-    #xhat = A\b
     dim = size(Σ,1)
     mu_vector = reshape(xhat, dim, group_count)
     return [mu_vector[:,i] for i=1:group_count]
