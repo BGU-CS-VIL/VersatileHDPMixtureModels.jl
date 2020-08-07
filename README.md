@@ -55,6 +55,12 @@ vhdpmm_local = Dict([i=> vhdpmm_results[1].groups_dict[i].labels for i=1:length(
 ```
 
 
+### Examples:
+[Coseg with super pixels](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/Coseg.ipynb) <br>
+[vHDP as HDP](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/vHDPasHDPGMM.ipynb) <br>
+[Missing data experiment](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/MissingData.ipynb) <br>
+[Synthethic data experiemnt](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/SynthethicData.ipynb)
+
 For examples, taken from the paper's experiments, see the `Examples` directory. <br>
 
 ### License
