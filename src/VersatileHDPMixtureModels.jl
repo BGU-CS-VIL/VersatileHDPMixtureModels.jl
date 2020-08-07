@@ -68,6 +68,7 @@ export
     hdp_fit,
     vhdp_fit, 
     create_default_priors,
-    get_model_global_pred
+    get_model_global_pred,
+    create_global_labels
 
 end # module
