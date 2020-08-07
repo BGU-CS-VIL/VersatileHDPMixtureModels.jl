@@ -5,6 +5,11 @@ This package is the code in this repository is for our UAI '20 paper titled "Sca
 [Paper](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020.pdf),
 [Supplemental Material](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020_supmat.pdf) <br>
 
+
+### What can it do?
+
+This package allows to perform inference in the *vHDPMM* setting, as described in the paper, or as an alternative, it can perform inference in *HDPMM* setting.
+
 ### Quick Start
 
 1. Get Julia from [here](https://julialang.org/), any version above 1.1.0 should work, install, and run it.
