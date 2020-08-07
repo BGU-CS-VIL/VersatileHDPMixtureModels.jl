@@ -38,9 +38,11 @@ function init_model(swap_axes; data = nothing , model_params = nothing)
 
     @eval global groups_dict = $groups_dict
     num_of_workers = nworkers()
-    @everywhere workers() global groups_dict = Dict()
+    for w in workers()
+        @spawnat w global groups_dict = Dict()
+    end
     @sync for (index,group) in groups_dict
-        @async @eval @spawnat (($index % $num_of_workers)+2) groups_dict[$index] = $group
+        @spawnat ((index % num_of_workers)+2) set_group(index,group)
     end
     return hdp_shared_features(model_hyperparams,groups_dict,global_cluster[],Float64[])
 end
@@ -58,7 +60,10 @@ function init_first_clusters!(hdp_model::hdp_shared_features)
         push!(global_c,create_first_global_cluster(hdp_model.model_hyperparams, hdp_model.groups_dict, i))
     end
     global global_clusters_vector  = global_c
-    @eval @everywhere global global_clusters_vector = $global_c
+    for w in workers()
+        @eval @spawnat $w global global_clusters_vector = $global_c
+    end
+    # @eval @everywhere global global_clusters_vector = $global_c
 end
 
 
@@ -79,6 +84,7 @@ function hdp_shared_features(model_params, swap_axes = nothing)
     global posterior_history = []
     global word_ll_history = []
     global topic_count = []
+
     for i=1:iterations
         println("Iteration: " * string(i))
         println("Global Counts: " * string([x.clusters_count for x in global_clusters_vector]))
@@ -102,11 +108,18 @@ function model_iteration(hdp_model,final, no_more_splits,burnout = 5)
     groups_stats = Dict()
     @everywhere global burnout_period = 5
     sample_global_clusters_params!(hdp_model)
-    @eval @everywhere global global_clusters_vector = $global_clusters_vector
+    global global_clusters_vector = global_clusters_vector
+    refs= Dict()
+    for w in workers()
+        refs[w] = remotecall(set_global_clusters_vector, w, global_clusters_vector)
+    end 
+    for w in workers()
+        fetch(refs[w])
+    end
     begin
         @sync for (index,group) in hdp_model.groups_dict
             lc = group.local_clusters
-            @async groups_stats[index] = @spawnat ((index % num_of_workers)+2) group_step(index,lc, final)
+            groups_stats[index] = @spawnat ((index % num_of_workers)+2) group_step(index,lc, final)
         end
 
         for (index,group) in groups_stats
@@ -294,7 +307,7 @@ function vhdp_fit(data,gdim, α,γ,η,gprior::distribution_hyper_params,lprior,i
     global random_seed = nothing
     global initial_local_clusters = initial_custers
     global initial_global_clusters = initial_custers
-    global burnout_period = burnout
+    
     dim = size(data[1],1)
     model_hyperparams = model_hyper_params(gprior,lprior,α,γ,η,1.0,1.0,dim,gdim + 1)
     model = init_model(nothing; data = data , model_params = model_hyperparams)
@@ -302,6 +315,10 @@ function vhdp_fit(data,gdim, α,γ,η,gprior::distribution_hyper_params,lprior,i
     global word_ll_history = []
     global topic_count = []
     @everywhere global split_delays = true
+    global burnout_period = burnout
+    for w in workers()
+        @spawnat w set_burnout(burnout)
+    end
     global num_of_workers = nworkers()
     iter = 1
     total_time = 0

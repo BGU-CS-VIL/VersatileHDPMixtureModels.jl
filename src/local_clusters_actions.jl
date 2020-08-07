@@ -563,21 +563,28 @@ end
 function group_step(group_num::Number, local_clusters::Vector{local_cluster}, final::Bool)
     group = groups_dict[group_num]
     group.local_clusters = local_clusters
-
     sample_clusters!(group)
     sample_labels!(group, (hard_clustering ? true : final))
-    # sample_sub_clusters!(group, (hard_clustering ? true : final))
     sample_sub_clusters!(group, false)
     update_suff_stats_posterior!(group)
     remove_empty_clusters!(group)
     if final == false && ignore_local == false
         check_and_split!(group, final)
         indices = check_and_merge!(group, final)
-        # check_and_split_global!(group, final)
-        # if length(indices) > 0
-        #     println(indices)
-        # end
     end
     remove_empty_clusters!(group)
     return local_group_stats(group.labels, group.labels_subcluster, group.local_clusters)
+end
+
+function set_group(group_num,group)        
+    groups_dict[group_num] = group
+end
+
+function set_burnout(burnout)
+    global burnout_period = burnout
+end
+
+
+function set_global_clusters_vector(g_vector)
+    global global_clusters_vector = g_vector
 end
