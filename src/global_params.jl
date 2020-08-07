@@ -1,9 +1,3 @@
-include("ds.jl")
-include("distributions/niw.jl")
-
-using LinearAlgebra
-
-
 #Global Setting
 use_gpu = false
 use_darrays = false #Only relevant if use_gpu = false

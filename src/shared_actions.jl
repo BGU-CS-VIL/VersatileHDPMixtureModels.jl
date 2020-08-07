@@ -1,6 +1,4 @@
-
 function create_subclusters_labels!(labels::AbstractArray{Int64,2},points::AbstractArray{Float64,2},cluster_params::splittable_cluster_params)
-    #lr_arr = create_array(zeros(length(labels), 2))
     if size(labels,1) == 0
         return
     end
@@ -9,18 +7,15 @@ function create_subclusters_labels!(labels::AbstractArray{Int64,2},points::Abstr
     log_likelihood!(lr_arr[:,2],points,cluster_params.cluster_params_r.distribution)
     lr_arr[:,1] .+= log(cluster_params.lr_weights[1])
     lr_arr[:,2] .+= log(cluster_params.lr_weights[2])
-    #labels .= mapslices(sample_log_cat,lr_arr, dims= [2])
     sample_log_cat_array!(labels,lr_arr)
 end
 
 
 function sample_labels!(labels::AbstractArray{Int64,2},points::AbstractArray{Float64,2},clusters_samples::Dict,final::Bool)
-    #lr_arr = create_array(zeros(length(labels), 2))
     parr = zeros(length(labels), length(clusters_samples))
     for (k,v) in clusters_samples
         log_likelihood!((@view parr[:,k]),points,v)
     end
-    #println(parr[1:10,:])
     sample_log_cat_array!(labels,parr,final)
 end
 
@@ -82,17 +77,6 @@ function should_split!(cluster_params::splittable_cluster_params, α::Float64, f
 end
 
 
-
-
-function update_splittable_cluster_params!(splittable_cluser::splittable_cluster_params,
-        points::AbstractArray{Float64,2},
-        sub_labels::AbstractArray{Int64,1},
-        is_global::Bool,
-        pts_to_groups = -1)
-    update_splittable_cluster_params(splittable_cluser, points, reshape(sub_labels,:,1), is_global)
-end
-
-
 function update_splittable_cluster_params!(splittable_cluser::splittable_cluster_params,
         points::AbstractArray{Float64,2},
         sub_labels::AbstractArray{Int64,1},
@@ -101,9 +85,6 @@ function update_splittable_cluster_params!(splittable_cluser::splittable_cluster
     cpl = splittable_cluser.cluster_params_l
     cpr = splittable_cluser.cluster_params_r
     cp = splittable_cluser.cluster_params
-    # println("bob")
-    # println(sum((@view (sub_labels .<= 2)[:])))
-    # println(sum((@view (sub_labels .> 2)[:])))
     if is_global
         cp.suff_statistics = create_sufficient_statistics(cp.hyperparams,cp.posterior_hyperparams, points, pts_to_groups)
         pts_gl = @view pts_to_groups[(@view (sub_labels .<= 2)[:])]
@@ -147,32 +128,6 @@ function update_splittable_cluster_params(splittable_cluser::splittable_cluster_
     end
     return splittable_cluser
 end
-
-# function update_splittable_cluster_params!(splittable_cluser::splittable_cluster_params, points::AbstractArray{Float64,2}, sub_labels::AbstractArray{Int64,1})
-#     cpl = splittable_cluser.cluster_params_l
-#     cpr = splittable_cluser.cluster_params_r
-#     cp = splittable_cluser.cluster_params
-#     cp.suff_statistics = create_sufficient_statistics(cp.hyperparams, points)
-#     cpl.suff_statistics = create_sufficient_statistics(cpl.hyperparams, @view points[:,(@view (sub_labels .== 1)[:])])
-#     cpr.suff_statistics = create_sufficient_statistics(cpr.hyperparams, @view points[:,(@view (sub_labels .== 2)[:])])
-#     cp.posterior_hyperparams = calc_posterior(cp.hyperparams, cp.suff_statistics)
-#     cpl.posterior_hyperparams = calc_posterior(cpl.hyperparams, cpl.suff_statistics)
-#     cpr.posterior_hyperparams = calc_posterior(cpr.hyperparams, cpr.suff_statistics)
-# end
-#
-#
-# function update_splittable_cluster_params(splittable_cluser::splittable_cluster_params, points::AbstractArray{Float64,2}, sub_labels::AbstractArray{Int64,1})
-#     cpl = splittable_cluser.cluster_params_l
-#     cpr = splittable_cluser.cluster_params_r
-#     cp = splittable_cluser.cluster_params
-#     cp.suff_statistics = create_sufficient_statistics(cp.hyperparams, points)
-#     cpl.suff_statistics = create_sufficient_statistics(cpl.hyperparams, @view points[:,(@view (sub_labels .== 1)[:])])
-#     cpr.suff_statistics = create_sufficient_statistics(cpr.hyperparams, @view points[:,(@view (sub_labels .== 2)[:])])
-#     cp.posterior_hyperparams = calc_posterior(cp.hyperparams, cp.suff_statistics)
-#     cpl.posterior_hyperparams = calc_posterior(cpl.hyperparams, cpl.suff_statistics)
-#     cpr.posterior_hyperparams = calc_posterior(cpr.hyperparams, cpr.suff_statistics)
-#     return splittable_cluser
-# end
 
 function sample_cluster_params!(params::splittable_cluster_params, α::Float64, is_zero_dim = false)
     points_count = Vector{Float64}()

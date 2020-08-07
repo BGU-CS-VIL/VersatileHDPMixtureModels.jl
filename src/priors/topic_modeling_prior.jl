@@ -1,5 +1,3 @@
-include("../ds.jl")
-
 struct topic_modeling_hyper <: distribution_hyper_params
     α::AbstractArray{Float64,1}
 end
@@ -28,14 +26,6 @@ function create_sufficient_statistics(hyper::topic_modeling_hyper,posterior::top
     end
     pt_count = counts(Int.(points),length(hyper.α))
     return topic_modeling_sufficient_statistics(size(points,2),pt_count)
-end
-
-function log_multivariate_gamma(x::Number, D::Number)
-    res::Float64 = D*(D-1)/4*log(pi)
-    for d = 1:D
-        res += logabsgamma(x+(1-d)/2)[1]
-    end
-    return res
 end
 
 function log_marginal_likelihood(hyper::topic_modeling_hyper, posterior_hyper::topic_modeling_hyper, suff_stats::topic_modeling_sufficient_statistics)

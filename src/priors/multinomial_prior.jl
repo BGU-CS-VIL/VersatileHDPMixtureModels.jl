@@ -1,5 +1,3 @@
-include("../ds.jl")
-
 struct multinomial_hyper <: distribution_hyper_params
     α::AbstractArray{Float64,1}
 end
@@ -27,14 +25,6 @@ function create_sufficient_statistics(hyper::multinomial_hyper,posterior::multin
     points_sum = sum(points, dims = 2)[:]
     #S = pts * pts'
     return multinomial_sufficient_statistics(size(points,2),points_sum, 0)
-end
-
-function log_multivariate_gamma(x::Number, D::Number)
-    res::Float64 = D*(D-1)/4*log(pi)
-    for d = 1:D
-        res += logabsgamma(x+(1-d)/2)[1]
-    end
-    return res
 end
 
 function log_marginal_likelihood(hyper::multinomial_hyper, posterior_hyper::multinomial_hyper, suff_stats::multinomial_sufficient_statistics)

@@ -1,9 +1,3 @@
-include("../ds.jl")
-using LinearAlgebra
-using Distributions
-# using PDMats
-
-
 struct topic_modeling_dist <: distibution_sample
     α::AbstractArray{Float64,1}
 end

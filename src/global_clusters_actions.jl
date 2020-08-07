@@ -33,24 +33,6 @@ function create_first_global_cluster(hyperparams::model_hyper_params, groups_dic
     return cluster
 end
 
-
-# #Need to add weights and create log likelihood aggregating function.
-# function sample_cluster_sub_label(cluster::local_cluster, points::AbstractArray{Float64,2})
-#     lr_arr = zeros(size(points,2), 2)
-#     log_likelihood!(lr_arr[:,1],points,global_clusters_vector[cluster.globalCluster].cluster_params.cluster_params_l.distribution)
-#     log_likelihood!(lr_arr[:,2],points,global_clusters_vector[cluster.globalCluster].cluster_params.cluster_params_r.distribution)
-#     # println("sublabels lr_parr: "* string(size(lr_arr)))
-#     lr_arr[:,1] .+= log(global_clusters_vector[cluster.globalCluster].cluster_params.lr_weights[1])
-#     lr_arr[:,2] .+= log(global_clusters_vector[cluster.globalCluster].cluster_params.lr_weights[2])
-#     sum_arr = sum(lr_arr,dims = 1)
-#     sum_arr .= exp.(sum_arr)
-#
-#     # println("sublabels parr: "* string(sum_arr))
-#     cluster.globalCluster_subcluster = argmax(sum_arr[:])
-#     #cluster.globalCluster_subcluster = sample(1:2, ProbabilityWeights(sum_arr[:]))
-#     return cluster.globalCluster_subcluster
-# end
-
 function get_p_for_point(x)
     x = log.(exp.(x .- maximum(x)) ./ exp(sum(x .- maximum(x))))
     x ./= sum(x)
@@ -65,7 +47,6 @@ function sample_group_cluster_labels(group_num::Int64, weights::AbstractArray{Fl
     for (k,v) in enumerate(global_clusters_vector)
         local_dim = v.local_dim
         log_likelihood!((@view parr[:,k]), points[1 : local_dim-1,:],v.cluster_params.cluster_params.distribution, group_num)
-        # parr[:,k] .+= log(weights[k])
     end
     clusters_parr = zeros(length(group.local_clusters),length(global_clusters_vector))
     labels = zeros(Int64,length(group.local_clusters),1)
@@ -87,16 +68,11 @@ end
 
 
 function sample_cluster_label(group::local_group, cluster::local_cluster ,i, weights::AbstractArray{Float64, 1},final::Bool)
-    #lr_arr = create_array(zeros(length(labels), 2))
-    # points = v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])]
     points = group.points[1 : cluster.local_dim - 1, @view (group.labels .== i)[:]]
     parr = zeros(size(points,2), length(global_clusters_vector))
     for (k,v) in enumerate(global_clusters_vector)
         log_likelihood!((@view parr[:,k]),points,v.cluster_params.cluster_params.distribution,group.group_num)
     end
-    # parr .= mapslices(x -> log.(exp.(x .- minimum(x)) ./ exp(sum(x .- minimum(x)))),parr, dims= [1])
-    # parr .= mapslices(x->x,parr, dims= [1])
-
     weights = reshape(weights,1,:)
     sum_arr = sum(parr,dims = 1)
     sum_arr .+= log.(weights)
@@ -169,53 +145,6 @@ function split_cluster!(model::hdp_shared_features, index::Int64, new_index::Int
     global_clusters_vector[new_index] = new_cluster
 end
 
-# function split_cluster!(model::hdp_shared_features, index::Int64, new_index::Int64)
-#     cluster = global_clusters_vector[index]
-#     new_cluster = deepcopy(cluster)
-#     new_cluster.cluster_params = create_splittable_from_params(cluster.cluster_params.cluster_params_r, model.model_hyperparams.γ)
-#     cluster.cluster_params = create_splittable_from_params(cluster.cluster_params.cluster_params_l, model.model_hyperparams.γ)
-#     new_cluster.points_count = new_cluster.cluster_params.cluster_params.suff_statistics.N
-#     cluster.points_count = cluster.cluster_params.cluster_params.suff_statistics.N
-#     global_clusters_vector[new_index] = new_cluster
-#     cl_count = 0
-#     cr_count = 0
-#     for (k,v) in model.groups_dict
-#         for (i,c) in enumerate(v.local_clusters)
-#             if c.globalCluster == index
-#                 if c.globalCluster_subcluster == 2
-#                     c.globalCluster = new_index
-#                     cr_count += 1
-#                 else
-#                     cl_count += 1
-#                 end
-#
-#                 c.globalCluster_subcluster = sample_cluster_sub_label(c, v.points[1:v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])])
-#             end
-#         end
-#     end
-#     cluster.clusters_count = cl_count
-#     new_cluster.clusters_count = cr_count
-# end
-
-# function merge_clusters!(model::hdp_shared_features,index_l::Int64, index_r::Int64)
-#     new_splittable_cluster = merge_clusters_to_splittable(global_clusters_vector[index_l].cluster_params.cluster_params, global_clusters_vector[index_r].cluster_params.cluster_params, model.model_hyperparams.α)
-#     global_clusters_vector[index_l].cluster_params = new_splittable_cluster
-#     global_clusters_vector[index_l].clusters_count += global_clusters_vector[index_r].clusters_count
-#     global_clusters_vector[index_l].cluster_params.splittable = false
-#     global_clusters_vector[index_r].cluster_params.cluster_params.suff_statistics.N = 0
-#     global_clusters_vector[index_r].cluster_params.splittable = false
-#     global_clusters_vector[index_r].clusters_count = 0
-#     for (k,v) in model.groups_dict
-#         for (i,c) in enumerate(v.local_clusters)
-#             if c.globalCluster == index_l
-#                 c.globalCluster_subcluster = 1
-#             elseif c.globalCluster == index_r
-#                 c.globalCluster_subcluster = 2
-#                 c.globalCluster = index_l
-#             end
-#         end
-#     end
-# end
 
 function merge_clusters!(model::hdp_shared_features,index_l::Int64, index_r::Int64)
     new_splittable_cluster = merge_clusters_to_splittable(global_clusters_vector[index_l].cluster_params.cluster_params, global_clusters_vector[index_r].cluster_params.cluster_params, model.model_hyperparams.α)
@@ -428,37 +357,6 @@ end
 
 function update_suff_stats_posterior!(model::hdp_shared_features, indices::AbstractArray{Int64,1})
     local_dim = model.model_hyperparams.local_dim
-    global_left_suff = Dict()
-    global_right_suff = Dict()
-    for i=1:length(global_clusters_vector)
-        global_left_suff[i] = []
-        global_right_suff[i] = []
-    end
-    for (i,group) in model.groups_dict
-        for c in group.local_clusters
-            global_index = c.globalCluster
-            push!(global_left_suff[global_index],c.global_suff_stats[1])
-            push!(global_right_suff[global_index],c.global_suff_stats[2])
-        end
-    end
-    for (i,cluster) in enumerate(global_clusters_vector)
-        cp = cluster.cluster_params.cluster_params
-        cpl = cluster.cluster_params.cluster_params_l
-        cpr = cluster.cluster_params.cluster_params_r
-        cluster.cluster_params.cluster_params_l.suff_statistics = reduce(aggregate_suff_stats, global_left_suff[i])
-        cluster.cluster_params.cluster_params_r.suff_statistics = reduce(aggregate_suff_stats, global_right_suff[i])
-        cluster.cluster_params.cluster_params.suff_statistics = aggregate_suff_stats(cluster.cluster_params.cluster_params_l.suff_statistics,
-            cluster.cluster_params.cluster_params_r.suff_statistics)
-        cluster.cluster_params.cluster_params.posterior_hyperparams = calc_posterior(cp.hyperparams, cp.suff_statistics)
-        cluster.cluster_params.cluster_params_l.posterior_hyperparams = calc_posterior(cpl.hyperparams, cpl.suff_statistics)
-        cluster.cluster_params.cluster_params_r.posterior_hyperparams = calc_posterior(cpr.hyperparams, cpr.suff_statistics)
-        cluster.clusters_sub_counts = [length(global_left_suff[i]), length(global_right_suff[i])]
-        cluster.clusters_count = length(global_left_suff[i])
-    end
-end
-
-function update_suff_stats_posterior!(model::hdp_shared_features, indices::AbstractArray{Int64,1})
-    local_dim = model.model_hyperparams.local_dim
     pts_vector_dict = Dict()
     sub_labels_vector_dict = Dict()
     clusters_count_dict = Dict()
@@ -475,12 +373,9 @@ function update_suff_stats_posterior!(model::hdp_shared_features, indices::Abstr
         for (i,c) in enumerate(v.local_clusters)
             if c.globalCluster in indices
                 push!(pts_vector_dict[c.globalCluster], (@view v.points[1:local_dim-1,(@view (v.labels .== i)[:])]))
-                #sub_labels = ones(Int64,(size(pts_vector_dict[c.globalCluster][end],2)))*c.globalCluster_subcluster
-                # println("global cluster" * string(c.globalCluster_subcluster))
                 sub_labels = (@view v.labels_subcluster[(@view (v.labels .== i)[:])])
                 push!(sub_labels_vector_dict[c.globalCluster], sub_labels)
                 push!(pts_to_groups[c.globalCluster],ones(Int64,size(sub_labels,1))*k)
-                #clusters_count_dict[c.globalCluster] += 1
             end
         end
     end
