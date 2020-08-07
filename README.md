@@ -61,8 +61,6 @@ vhdpmm_local = Dict([i=> vhdpmm_results[1].groups_dict[i].labels for i=1:length(
 [Missing data experiment](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/MissingData.ipynb) <br>
 [Synthethic data experiemnt](https://nbviewer.jupyter.org/github/BGU-CS-VIL/VersatileHDPMixtureModels.jl/blob/master/examples/SynthethicData.ipynb)
 
-For examples, taken from the paper's experiments, see the `Examples` directory. <br>
-
 ### License
 
 This software is released under the MIT License (included with the software). Note, however, that if you are using this code (and/or the results of running it) to support any form of publication (e.g., a book, a journal paper, a conference paper, a patent application, etc.) then we request you will cite our paper:
