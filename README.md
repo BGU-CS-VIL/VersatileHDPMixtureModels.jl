@@ -1,5 +1,6 @@
 # VersatileHDPMixtureModels.jl
 
+
 This package is the code in this repository is for our UAI '20 paper titled "Scalable and Flexible Clustering of Grouped Data via Parallel and Distributed Sampling in Versatile Hierarchical Dirichlet Processes". <br>
 [Paper](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020.pdf),
 [Supplemental Material](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020_supmat.pdf) <br>
@@ -54,13 +55,11 @@ vhdpmm_local = Dict([i=> vhdpmm_results[1].groups_dict[i].labels for i=1:length(
 ```
 
 
-### Misc
+For examples, taken from the paper's experiments, see the `Examples` directory. <br>
 
-For any questions: dinari at post.bgu.ac.il
+### License
 
-Contributions, feature requests, suggestion etc.. are welcomed.
-
-If you use this code for your work, please cite the following:
+This software is released under the MIT License (included with the software). Note, however, that if you are using this code (and/or the results of running it) to support any form of publication (e.g., a book, a journal paper, a conference paper, a patent application, etc.) then we request you will cite our paper:
 
 ```
 @inproceedings{dinari2020vhdp,
@@ -70,3 +69,12 @@ If you use this code for your work, please cite the following:
   year={2020}
 }
 ```
+
+### Misc
+
+For any questions: dinari at post.bgu.ac.il
+
+Contributions, feature requests, suggestion etc.. are welcomed.
+
+
+
