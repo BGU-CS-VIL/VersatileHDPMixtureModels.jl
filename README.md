@@ -52,7 +52,7 @@ g_prior, l_prior = create_default_priors(2,1,:niw)
 
 
 #Run the model:
-vhdpmm_results = vhdp_fit(pts,2,100.0,1000.0,100.0,gprior,lprior,50)
+vhdpmm_results = vhdp_fit(pts,2,100.0,1000.0,100.0,g_prior,l_prior,50)
 
 #Get global and local assignments for the points:
 vhdpmm_global = Dict([i=> create_global_labels(vhdpmm_results[1].groups_dict[i]) for i=1:length(data)])
