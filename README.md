@@ -1,7 +1,7 @@
 # VersatileHDPMixtureModels.jl
 
 
-This package is the code in this repository is for our UAI '20 paper titled "Scalable and Flexible Clustering of Grouped Data via Parallel and Distributed Sampling in Versatile Hierarchical Dirichlet Processes". <br>
+This package is the code for our UAI '20 paper titled "Scalable and Flexible Clustering of Grouped Data via Parallel and Distributed Sampling in Versatile Hierarchical Dirichlet Processes". <br>
 [Paper](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020.pdf),
 [Supplemental Material](https://www.cs.bgu.ac.il/~orenfr/papers/Dinari_UAI_2020_supmat.pdf) <br>
 
