@@ -25,7 +25,7 @@ addprocs(2)
 ```
 # Sample some data from a CRF PRIOR:
 # We sample 3D data, 4 Groups, with $\alpha=10,\gamma=1$. and variance of 100 between the components means.
-crf_prior = hdp_prior_crf_draws(100,3)
+crf_prior = hdp_prior_crf_draws(100,3,10,1)
 pts,labels = generate_grouped_gaussian_from_hdp_group_counts(crf_prior[2],3,100.0)
 
 
