@@ -16,7 +16,7 @@ This package allows to perform inference in the *vHDPMM* setting, as described i
 2. Add the package `]add VersatileHDPMixtureModels`.
 3. Add some processes and use the package:
 ```
-using Disrtibuted
+using Distributed
 addprocs(2)
 @everywhere using VersatileHDPMixtureModels
 ```
