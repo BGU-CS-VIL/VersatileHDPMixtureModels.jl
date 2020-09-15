@@ -72,7 +72,7 @@ This software is released under the MIT License (included with the software). No
 
 ```
 @inproceedings{dinari2020vhdp,
-  title={Scalable and Flexible Clustering of Grouped Data via Parallel and Distributed Sampling in Versatile Hierarchical Dirichlet Processes},
+  title={Scalable and Flexible Clustering of Grouped Data via Parallel and Distributed Sampling in Versatile Hierarchical {D}irichlet Processes},
   author={{Dinari, Or and Freifeld, Oren},
   booktitle={UAI},
   year={2020}
