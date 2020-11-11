@@ -91,16 +91,22 @@ function sample_cluster_label(group::local_group, cluster::local_cluster ,i, wei
 end
 
 function sample_clusters_labels!(model::hdp_shared_features, final::Bool)
-    labels_dict = Dict()
+    labels_dict = Vector{Array}(undef,length(model.groups_dict))
     groups_count = zeros(length(global_clusters_vector))
     wvector = model.weights
-    @sync for (k,v) in model.groups_dict
-        @async labels_dict[k] = @spawnat ((k % nworkers())+2) sample_group_cluster_labels(k, wvector, final)
-        # labels_dict[k] = Dict()
-        # for (i,c) in enumerate(v.local_clusters)
-        #     # labels_dict[k][i] = @spawn sample_cluster_label(c, v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])], model.weights, final)
-        #     labels_dict[k][i] = sample_cluster_label(v,c, i, model.weights, final)
-        # end
+    if mp
+        @sync for (k,v) in model.groups_dict
+            @async labels_dict[k] = @spawnat ((k % nworkers())+2) sample_group_cluster_labels(k, wvector, final)
+            # labels_dict[k] = Dict()
+            # for (i,c) in enumerate(v.local_clusters)
+            #     # labels_dict[k][i] = @spawn sample_cluster_label(c, v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])], model.weights, final)
+            #     labels_dict[k][i] = sample_cluster_label(v,c, i, model.weights, final)
+            # end
+        end
+    else
+        Threads.@threads for k=1:length(model.groups_dict)
+            labels_dict[k] = sample_group_cluster_labels(k, wvector, final)
+        end
     end
     #at ((k % num_of_workers)+1)
     for (k,v) in model.groups_dict
@@ -121,9 +127,16 @@ function sample_sub_clusters!(model::hdp_shared_features)
         v.clusters_sub_counts = [0,0]
     end
     for (k,v) in model.groups_dict
-        labels_dict[k] = Dict()
-        for (i,c) in enumerate(v.local_clusters)
-            labels_dict[k][i] = @spawnat ((k % num_of_workers)+1) sample_cluster_sub_label(c, v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])])
+        labels_dict[k] = Vector{Array}(undef,length(model.groups_dict))
+        if mp
+            for (i,c) in enumerate(v.local_clusters)
+                labels_dict[k][i] = @spawnat ((k % num_of_workers)+1) sample_cluster_sub_label(c, v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])])
+            end
+        else
+            Threads.@threads for i=1:length(v.local_clusters)
+                c=local_clusters[i]
+                labels_dict[k][i] = sample_cluster_sub_label(c, v.points[1 : v.model_hyperparams.local_dim - 1, (@view (v.labels .== i)[:])])
+            end
         end
     end
     for (k,v) in model.groups_dict
