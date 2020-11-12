@@ -35,14 +35,22 @@ function init_model(swap_axes; data = nothing , model_params = nothing)
         end
         groups_dict[k] = local_group(localised_params,v,labels,labels_subcluster,local_clusters,Float64[],k)
     end
+    if isa(model_hyperparams.global_hyper_params,topic_modeling_hyper)
+        global is_tp = true
+    else
+        global is_tp = false
+    end
 
     @eval global groups_dict = $groups_dict
-    num_of_workers = nworkers()
-    for w in workers()
-        @spawnat w global groups_dict = Dict()
-    end
-    @sync for (index,group) in groups_dict
-        @spawnat ((index % num_of_workers)+2) set_group(index,group)
+    if mp
+        num_of_workers = nworkers()
+        for w in workers()
+            @spawnat w global groups_dict = Dict()
+        end
+
+        @sync for (index,group) in groups_dict
+            @spawnat ((index % num_of_workers)+2) set_group(index,group)
+        end
     end
     return hdp_shared_features(model_hyperparams,groups_dict,global_cluster[],Float64[])
 end
@@ -131,21 +139,21 @@ function model_iteration(hdp_model,final, no_more_splits,burnout = 5)
                 groups_stats[index] = group_step(index,lc, final)
             end
         end
-        for (index,group) in groups_stats
+        for index=1:length(groups_dict)
             update_group_from_stats!(hdp_model.groups_dict[index], fetch(groups_stats[index]))
-        end       
+        end
     end
     sample_clusters_labels!(hdp_model, (hard_clustering ? true : final))
     remove_empty_clusters!(hdp_model)
     update_suff_stats_posterior!(hdp_model,collect(1:length(global_clusters_vector)))
     hdp_model.global_clusters = global_clusters_vector
     push!(posterior_history,calc_global_posterior(hdp_model))
-    if isa(hdp_model.model_hyperparams.global_hyper_params, topic_modeling_hyper)
-        word_ll = calc_avg_word(hdp_model)
-        println("Per Word LL:" * string(word_ll))
-        push!(word_ll_history,word_ll)
-        push!(topic_count,length(global_clusters_vector))
-    end
+    # if isa(hdp_model.model_hyperparams.global_hyper_params, topic_modeling_hyper)
+    #     word_ll = calc_avg_word(hdp_model)
+    #     println("Per Word LL:" * string(word_ll))
+    #     push!(word_ll_history,word_ll)
+    #     push!(topic_count,length(global_clusters_vector))
+    # end
     if no_more_splits == false
         # println(length((global_clusters_vector)))
         indices = check_and_split!(hdp_model, final)

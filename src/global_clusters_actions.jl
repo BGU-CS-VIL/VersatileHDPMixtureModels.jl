@@ -247,9 +247,15 @@ function get_groups_split_log_likelihood(groups_dict::Dict,
             if c.globalCluster == global_cluster_index
                 lcount = c.global_suff_stats[1]
                 rcount = c.global_suff_stats[2]
-                total_likelihood += (logabsgamma(γ * glob_weight)[1] - logabsgamma(γ * glob_weight + lcount+ rcount)[1] +
-                    logabsgamma(γ * glob_weight * lweight + lcount)[1] - logabsgamma(γ * glob_weight * lweight)[1] +
-                    logabsgamma(γ * glob_weight * rweight + rcount)[1] - logabsgamma(γ * glob_weight * rweight)[1])
+                if is_tp == false
+                    total_likelihood += (logabsgamma(γ * glob_weight)[1] - logabsgamma(γ * glob_weight + lcount+ rcount)[1] +
+                        logabsgamma(γ * glob_weight * lweight + lcount)[1] - logabsgamma(γ * glob_weight * lweight)[1] +
+                        logabsgamma(γ * glob_weight * rweight + rcount)[1] - logabsgamma(γ * glob_weight * rweight)[1])
+                else
+                    total_likelihood += (logabsgamma(γ * glob_weight)[1] - logabsgamma( glob_weight + lcount+ rcount)[1] +
+                        logabsgamma(γ * glob_weight * lweight + lcount)[1] - logabsgamma(glob_weight * lweight)[1] +
+                        logabsgamma(γ * glob_weight * rweight + rcount)[1] - logabsgamma(glob_weight * rweight)[1])
+                end
             end
         end
 

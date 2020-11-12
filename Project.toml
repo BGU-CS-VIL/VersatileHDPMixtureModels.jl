@@ -1,7 +1,7 @@
 name = "VersatileHDPMixtureModels"
 uuid = "cb401d7d-c4f9-4284-af24-a1eca280e8e8"
 authors = ["Or Dinari <dinari.or@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
@@ -22,5 +22,5 @@ JLD2 = "0, 2"
 NPZ = "0, 2"
 SpecialFunctions = "0,1"
 StatsBase = "0,2"
-julia = "1,2"
+julia = "1.5,2"
 PDMats ="0,1"
