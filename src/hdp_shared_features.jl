@@ -35,14 +35,22 @@ function init_model(swap_axes; data = nothing , model_params = nothing)
         end
         groups_dict[k] = local_group(localised_params,v,labels,labels_subcluster,local_clusters,Float64[],k)
     end
+    if isa(model_hyperparams.global_hyper_params,topic_modeling_hyper)
+        global is_tp = true
+    else
+        global is_tp = false
+    end
 
     @eval global groups_dict = $groups_dict
-    num_of_workers = nworkers()
-    for w in workers()
-        @spawnat w global groups_dict = Dict()
-    end
-    @sync for (index,group) in groups_dict
-        @spawnat ((index % num_of_workers)+2) set_group(index,group)
+    if mp
+        num_of_workers = nworkers()
+        for w in workers()
+            @spawnat w global groups_dict = Dict()
+        end
+
+        @sync for (index,group) in groups_dict
+            @spawnat ((index % num_of_workers)+2) set_group(index,group)
+        end
     end
     return hdp_shared_features(model_hyperparams,groups_dict,global_cluster[],Float64[])
 end
@@ -67,7 +75,7 @@ function init_first_clusters!(hdp_model::hdp_shared_features)
 end
 
 
-function hdp_shared_features(model_params, swap_axes = nothing)
+function hdp_shared_features(model_params, swap_axes = nothing;multiprocess = false)
     cur_dir = pwd()
     include(model_params)
     cd(cur_dir)
@@ -84,7 +92,7 @@ function hdp_shared_features(model_params, swap_axes = nothing)
     global posterior_history = []
     global word_ll_history = []
     global topic_count = []
-
+    global mp = multiprocess
     for i=1:iterations
         println("Iteration: " * string(i))
         println("Global Counts: " * string([x.clusters_count for x in global_clusters_vector]))
@@ -96,7 +104,7 @@ function hdp_shared_features(model_params, swap_axes = nothing)
         if i >= iterations - split_stop
             no_more_splits = true
         end
-        model_iteration(hdp_model,final,no_more_splits)        
+        model_iteration(hdp_model,final,no_more_splits)
 
     end
     hdp_model.global_clusters = global_clusters_vector
@@ -105,24 +113,33 @@ end
 
 
 function model_iteration(hdp_model,final, no_more_splits,burnout = 5)
-    groups_stats = Dict()
+    groups_stats = Vector{local_group_stats}(undef,length(groups_dict))
     @everywhere global burnout_period = 5
     sample_global_clusters_params!(hdp_model)
     global global_clusters_vector = global_clusters_vector
     refs= Dict()
-    for w in workers()
-        refs[w] = remotecall(set_global_clusters_vector, w, global_clusters_vector)
-    end 
-    for w in workers()
-        fetch(refs[w])
+    if mp
+        for w in workers()
+            refs[w] = remotecall(set_global_clusters_vector, w, global_clusters_vector)
+        end
+        for w in workers()
+            fetch(refs[w])
+        end
     end
     begin
-        @sync for (index,group) in hdp_model.groups_dict
-            lc = group.local_clusters
-            groups_stats[index] = @spawnat ((index % num_of_workers)+2) group_step(index,lc, final)
+        if mp
+            @sync for (index,group) in hdp_model.groups_dict
+                lc = group.local_clusters
+                groups_stats[index] = @spawnat ((index % num_of_workers)+2) group_step(index,lc, final)
+            end
+        else
+            Threads.@threads for index=1:length(groups_dict)
+                group=groups_dict[index]
+                lc = group.local_clusters
+                groups_stats[index] = group_step(index,lc, final)
+            end
         end
-
-        for (index,group) in groups_stats
+        for index=1:length(groups_dict)
             update_group_from_stats!(hdp_model.groups_dict[index], fetch(groups_stats[index]))
         end
     end
@@ -131,12 +148,12 @@ function model_iteration(hdp_model,final, no_more_splits,burnout = 5)
     update_suff_stats_posterior!(hdp_model,collect(1:length(global_clusters_vector)))
     hdp_model.global_clusters = global_clusters_vector
     push!(posterior_history,calc_global_posterior(hdp_model))
-    if isa(hdp_model.model_hyperparams.global_hyper_params, topic_modeling_hyper)
-        word_ll = calc_avg_word(hdp_model)
-        println("Per Word LL:" * string(word_ll))
-        push!(word_ll_history,word_ll)
-        push!(topic_count,length(global_clusters_vector))
-    end
+    # if isa(hdp_model.model_hyperparams.global_hyper_params, topic_modeling_hyper)
+    #     word_ll = calc_avg_word(hdp_model)
+    #     println("Per Word LL:" * string(word_ll))
+    #     push!(word_ll_history,word_ll)
+    #     push!(topic_count,length(global_clusters_vector))
+    # end
     if no_more_splits == false
         # println(length((global_clusters_vector)))
         indices = check_and_split!(hdp_model, final)
@@ -289,25 +306,25 @@ function k_mean_likelihood(likehood_rating,k)
     return R.centers, assignments(R)
 end
 
-function hdp_fit(data, α,γ,prior,iters, initial_custers = 1,burnout = 5)
+function hdp_fit(data, α,γ,prior,iters, initial_custers = 1,burnout = 5;multiprocess=false)
     dim = size(data[1],1)
     gdim = dim
     gprior,lprior = create_default_priors(gdim,dim-gdim,:niw)
-    return vhdp_fit(data,gdim, α,γ,α,prior,lprior,iters,initial_custers,burnout)
+    return vhdp_fit(data,gdim, α,γ,α,prior,lprior,iters,initial_custers,burnout,multiprocess=multiprocess)
 end
 
-function vhdp_fit(data,gdim, α,γ,η,prior::Symbol,iters, initial_custers = 1,burnout = 5)
+function vhdp_fit(data,gdim, α,γ,η,prior::Symbol,iters, initial_custers = 1,burnout = 5;multiprocess=false)
     dim = size(data[1],1)
     gprior,lprior = create_default_priors(gdim,dim-gdim,prior)
-    return vhdp_fit(data,gdim, α,γ,η,gprior,lprior,iters, initial_custers,burnout)
+    return vhdp_fit(data,gdim, α,γ,η,gprior,lprior,iters, initial_custers,burnout,multiprocess=multiprocess)
 end
 
 
-function vhdp_fit(data,gdim, α,γ,η,gprior::distribution_hyper_params,lprior,iters, initial_custers = 1,burnout = 5)
+function vhdp_fit(data,gdim, α,γ,η,gprior::distribution_hyper_params,lprior,iters, initial_custers = 1,burnout = 5;multiprocess=false)
     global random_seed = nothing
     global initial_local_clusters = initial_custers
     global initial_global_clusters = initial_custers
-    
+    global mp = multiprocess
     dim = size(data[1],1)
     model_hyperparams = model_hyper_params(gprior,lprior,α,γ,η,1.0,1.0,dim,gdim + 1)
     model = init_model(nothing; data = data , model_params = model_hyperparams)
@@ -316,8 +333,10 @@ function vhdp_fit(data,gdim, α,γ,η,gprior::distribution_hyper_params,lprior,i
     global topic_count = []
     @everywhere global split_delays = true
     global burnout_period = burnout
-    for w in workers()
-        @spawnat w set_burnout(burnout)
+    if mp
+        for w in workers()
+            @spawnat w set_burnout(burnout)
+        end
     end
     global num_of_workers = nworkers()
     iter = 1
