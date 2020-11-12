@@ -33,4 +33,6 @@ end
 
 nips_data = text_file_to_dict(nips_path)
 nips_gprior = topic_modeling_hyper(Float64.(ones(12419))*0.1)
-model = hdp_fit(nips_data,1.0,1.0,1.0,nips_gprior,100,10,15)
+### Unlike the HDP, here to promote splits you need to increase both γ and α.
+model = hdp_fit(nips_data,100.0,100.0,nips_gprior,80,1,10)
+avg_word = VersatileHDPMixtureModels.calc_avg_word(model[1])
