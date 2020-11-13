@@ -23,6 +23,7 @@ include("distributions/mv_gaussian.jl")
 include("distributions/mv_group_gaussian.jl")
 include("distributions/multinomial_dist.jl")
 include("distributions/topic_modeling_dist.jl")
+include("distributions/compact_mnm.jl")
 
 #Priors:
 include("priors/multinomial_prior.jl")
@@ -30,6 +31,8 @@ include("priors/topic_modeling_prior.jl")
 include("priors/niw.jl")
 include("priors/niw_stable_var.jl")
 include("priors/bayes_network_model.jl")
+include("priors/compact_mnm_prior.jl")
+
 
 #Rest:
 include("params_base.jl")
@@ -42,7 +45,7 @@ include("gaussian_generator.jl")
 include("hdp_shared_features.jl")
 
 #Data Generators:
-export 
+export
     generate_sph_gaussian_data,
     generate_gaussian_data,
     generate_mnmm_data,
@@ -54,10 +57,10 @@ export
     create_grouped_mnmm_data,
     hdp_prior_crf_draws,
     generate_grouped_gaussian_from_hdp_group_counts,
-#Model DS:    
+#Model DS:
     hdp_shared_features,
     multinomial_dist,
-    mv_gaussian, 
+    mv_gaussian,
     mv_group_gaussian,
     topic_modeling_dist,
     bayes_network_model,
@@ -66,7 +69,7 @@ export
     topic_modeling_hyper,
 #Functions
     hdp_fit,
-    vhdp_fit, 
+    vhdp_fit,
     create_default_priors,
     get_model_global_pred,
     create_global_labels
