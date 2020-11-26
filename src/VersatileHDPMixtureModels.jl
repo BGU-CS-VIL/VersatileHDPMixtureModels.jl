@@ -67,6 +67,8 @@ export
     niw_hyperparams,
     niw_stable_hyperparams,
     topic_modeling_hyper,
+    compact_mnm_hyper,
+    compact_mnm_dist,
 #Functions
     hdp_fit,
     vhdp_fit,
