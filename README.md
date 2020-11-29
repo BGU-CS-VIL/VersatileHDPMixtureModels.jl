@@ -10,6 +10,11 @@ This package is the code for our UAI '20 paper titled "Scalable and Flexible Clu
 
 This package allows to perform inference in the *vHDPMM* setting, as described in the paper, or as an alternative, it can perform inference in *HDPMM* setting.
 
+#### A note on scalability
+
+With the recent release (0.1.1) we have added threads support (instead of multiprocessing) as default. to enable multiprocessing instead add `mp=true` to the fit functions.
+Using the multithreaded version, we can now handle more groups, much more. Just to emphasize, we have recently used it with 7k groups, summing to a total of 220MIL data points, each data point a `D=256` histogram. Convergance took only 4 hours. In another scenario we have used it for topic modeling, with 84K documents, each between 100 to 300 words, convergance took about an hour.
+
 ### Quick Start
 
 1. Get Julia from [here](https://julialang.org/), any version above 1.1.0 should work, install, and run it.
